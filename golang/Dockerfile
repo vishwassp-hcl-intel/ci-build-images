@@ -16,9 +16,9 @@ RUN apk add --update --no-cache git linux-headers make gcc musl-dev curl
 #Optional dependencies. These are useful for generating reports for tools like SonarQube and Jenkins
 
 # Installing gometalinter
-# Usage example: golangci-lint run --config=/.golangci.yml ./...
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
-COPY .golangci.yml /
+# Usage example: gometalinter.v2 --checkstyle --vendor --disable gotype --deadline=120s --config=/linter-settings.json ./...
+RUN  go get -u gopkg.in/alecthomas/gometalinter.v2 &&  gometalinter.v2 --install
+COPY docker/golang-base/linter-settings.json /
 
 # Installing gocov to output code coverage xml files. Useful for SonarQube code coverage
 # Usage Example: gocov test ./... | gocov-xml
