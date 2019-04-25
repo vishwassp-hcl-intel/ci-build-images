@@ -29,6 +29,9 @@ pipeline {
             steps {
                 edgeXSetupEnvironment()
                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+                script {
+                    properties([pipelineTriggers([githubPush()])])
+                }
             }
         }
 
