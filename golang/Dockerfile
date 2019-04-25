@@ -18,7 +18,7 @@ RUN apk add --update --no-cache git linux-headers make gcc musl-dev curl
 # Installing gometalinter
 # Usage example: gometalinter.v2 --checkstyle --vendor --disable gotype --deadline=120s --config=/linter-settings.json ./...
 RUN  go get -u gopkg.in/alecthomas/gometalinter.v2 &&  gometalinter.v2 --install
-COPY docker/golang-base/linter-settings.json /
+COPY linter-settings.json /
 
 # Installing gocov to output code coverage xml files. Useful for SonarQube code coverage
 # Usage Example: gocov test ./... | gocov-xml
