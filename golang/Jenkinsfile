@@ -34,49 +34,63 @@ pipeline {
 
         stage('Build Docker Image') {
             parallel {
-                stage('Build amd64') {
+                stage('amd64') {
                     agent {
                         label 'centos7-docker-4c-2g'
                     }
-                    steps {
-                        script {
-                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
-                                image_amd64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
-                                
-                                image_amd64.tag("latest")
-                                image_amd64.tag(env.GIT_COMMIT)
-                                image_amd64.tag("1.11.9-alpine")
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                script {
+                                    image_amd64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
+                                        image_amd64.tag("amd64")
+                                        image_amd64.tag(env.GIT_COMMIT)
+                                        image_amd64.tag("1.11.9-alpine")
+
+                                        image_amd64.push()
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                stage('Build arm64') {
+                stage('arm64') {
                     agent {
                         label 'ubuntu18.04-docker-arm64-4c-2g'
                     }
-                    steps {
-                        script {
-                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
-                                image_arm64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
-                                
-                                image_arm64.tag("arm64")
-                                image_arm64.tag("${env.GIT_COMMIT}-arm64")
-                                image_arm64.tag("1.11.9-alpine-arm64")
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                script {
+                                    image_arm64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
+                                }
                             }
                         }
-                    }
-                }
-            }
-        }
 
-        stage('Push Docker Image') {
-            when { expression { edgex.isReleaseStream() } }
-            steps {
-                script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
-                        image_amd64.push()
-                        image_arm64.push()
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
+                                        image_arm64.tag("arm64")
+                                        image_arm64.tag("${env.GIT_COMMIT}-arm64")
+                                        image_arm64.tag("1.11.9-alpine-arm64")
+
+                                        image_arm64.push()
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
