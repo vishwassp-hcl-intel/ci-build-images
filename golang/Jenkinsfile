@@ -40,7 +40,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
                                 image_amd64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
                                 
                                 image_amd64.tag("latest")
@@ -57,7 +57,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
                                 image_arm64 = docker.build('edgex-golang-base', '-f golang/Dockerfile ./golang')
                                 
                                 image_arm64.tag("arm64")
