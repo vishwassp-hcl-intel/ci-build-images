@@ -49,7 +49,7 @@ pipeline {
             when { expression { edgex.isReleaseStream() } }
             steps {
                 script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10002") {
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
                         image_amd64.push()
                     }
                 }
