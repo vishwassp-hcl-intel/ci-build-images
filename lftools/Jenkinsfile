@@ -34,13 +34,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
-                        image_amd64 = docker.build('edgex-lftools', '-f lftools/Dockerfile .')
-                        
-                        image_amd64.tag("latest")
-                        image_amd64.tag(env.GIT_COMMIT)
-                        image_amd64.tag("0.23.1-centos7")
-                    }
+                    image_amd64 = docker.build('edgex-lftools', '-f lftools/Dockerfile .')
                 }
             }
         }
@@ -50,7 +44,9 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
-                        image_amd64.push()
+                        image_amd64.push("latest")
+                        image_amd64.push(env.GIT_COMMIT)
+                        image_amd64.push("0.23.1-centos7")
                     }
                 }
             }
