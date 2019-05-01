@@ -34,7 +34,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
                         image_amd64 = docker.build('edgex-lftools', '-f lftools/Dockerfile .')
                         
                         image_amd64.tag("latest")
