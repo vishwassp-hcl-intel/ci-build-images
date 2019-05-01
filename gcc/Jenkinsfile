@@ -28,7 +28,6 @@ pipeline {
         stage('LF Prep') {
             steps {
                 edgeXSetupEnvironment()
-                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
             }
         }
 
@@ -41,6 +40,8 @@ pipeline {
                     stages {
                         stage('Docker Build') {
                             steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
                                 script {
                                     image_amd64 = docker.build('edgex-gcc-base', '-f gcc/Dockerfile ./gcc')
                                 }
@@ -69,6 +70,8 @@ pipeline {
                     stages {
                         stage('Docker Build') {
                             steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
                                 script {
                                     image_arm64 = docker.build('edgex-gcc-base', '-f gcc/Dockerfile ./gcc')
                                 }
