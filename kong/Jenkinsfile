@@ -17,6 +17,7 @@
 loadGlobalLibrary()
 
 def image
+def changeDetected
 
 pipeline {
     agent {
@@ -28,10 +29,14 @@ pipeline {
             steps {
                 edgeXSetupEnvironment()
                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+                script {
+                    changeDetected = edgex.didChange('kong')
+                }
             }
         }
 
         stage('Build Docker Image') {
+            when { expression { changeDetected } }
             steps {
                 sh 'docker run --rm --privileged multiarch/qemu-user-static:register --reset'
 
@@ -48,7 +53,7 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-            when { expression { edgex.isReleaseStream() } }
+            when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
             steps {
                 script {
                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {

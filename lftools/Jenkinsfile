@@ -17,6 +17,7 @@
 loadGlobalLibrary()
 
 def image_amd64
+def changeDetected
 
 pipeline {
     agent {
@@ -28,10 +29,14 @@ pipeline {
             steps {
                 edgeXSetupEnvironment()
                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+                script {
+                    changeDetected = edgex.didChange('lftools')
+                }
             }
         }
 
         stage('Build Docker Image') {
+            when { expression { changeDetected } }
             steps {
                 script {
                     image_amd64 = docker.build('edgex-lftools', '-f lftools/Dockerfile .')
@@ -40,7 +45,7 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-            when { expression { edgex.isReleaseStream() } }
+            when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
             steps {
                 script {
                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
