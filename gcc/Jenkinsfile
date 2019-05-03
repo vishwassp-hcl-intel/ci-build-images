@@ -18,6 +18,7 @@ loadGlobalLibrary()
 
 def image_amd64
 def image_arm64
+def changeDetected
 
 pipeline {
     agent {
@@ -28,10 +29,14 @@ pipeline {
         stage('LF Prep') {
             steps {
                 edgeXSetupEnvironment()
+                script {
+                    changeDetected = edgex.didChange('gcc')
+                }
             }
         }
 
         stage('Build Docker Image') {
+            when { expression { changeDetected } }
             parallel {
                 stage('amd64') {
                     agent {
