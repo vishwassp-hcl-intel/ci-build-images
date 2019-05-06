@@ -7,7 +7,7 @@
 FROM hypriot/rpi-alpine
 
 LABEL license='SPDX-License-Identifier: Apache-2.0' \
-  copyright='Copyright (c) 2010: Intel'
+  copyright='Copyright (c) 2019: Intel'
 
 LABEL maintainer="Sven Walther <sven@walther.world>"
 

@@ -7,7 +7,7 @@
 FROM golang:1.11.9-alpine
 
 LABEL license='SPDX-License-Identifier: Apache-2.0' \
-      copyright='Copyright (c) 2010: Intel'
+      copyright='Copyright (c) 2019: Intel'
 
 RUN sed -e 's/dl-cdn[.]alpinelinux.org/nl.alpinelinux.org/g' -i~ /etc/apk/repositories
 
