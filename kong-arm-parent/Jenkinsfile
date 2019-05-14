@@ -31,7 +31,7 @@ pipeline {
                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
                 script {
                     changeDetected = edgex.didChange('kong-arm-parent')
-                    println "Detected Change in Kong? ${changeDetected}"
+                    println "Detected Change in Kong ARM Parent? ${changeDetected}"
                 }
             }
         }
