@@ -13,7 +13,7 @@ LABEL maintainer="Sven Walther <sven@walther.world>"
 
 # This layer contains all the components build from src like openssl, openresty, kong, etc
 # We are pre-caching these components because they take over 2.5 hours to build
-COPY --from=ernestoojeda/kong-base:1.0.3 /usr/local /usr/local
+COPY --from=nexus3.edgexfoundry.org:10004/kong-arm-parent:82d4fd92b29024a3d5f3184c3100c58fb9e3e0ae /usr/local /usr/local
 
 RUN adduser -Su 1337 -g root kong \
   && apk add --no-cache --virtual .build-deps wget tar ca-certificates \
