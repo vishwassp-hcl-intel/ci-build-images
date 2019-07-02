@@ -11,7 +11,7 @@ LABEL license='SPDX-License-Identifier: Apache-2.0' \
 
 RUN sed -e 's/dl-cdn[.]alpinelinux.org/nl.alpinelinux.org/g' -i~ /etc/apk/repositories
 
-RUN apk add --update --no-cache git linux-headers make gcc musl-dev curl
+RUN apk add --update --no-cache git linux-headers make gcc musl-dev curl bash
 
 #Optional dependencies. These are useful for generating reports for tools like SonarQube and Jenkins
 
