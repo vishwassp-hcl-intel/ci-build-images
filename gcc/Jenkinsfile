@@ -58,7 +58,7 @@ pipeline {
                             when { expression { edgex.isReleaseStream() } }
                             steps {
                                 script {
-                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
                                         image_amd64.push("amd64")
                                         image_amd64.push(env.GIT_COMMIT)
                                         image_amd64.push(env.BUILD_NUMBER)
@@ -88,7 +88,7 @@ pipeline {
                             when { expression { edgex.isReleaseStream() } }
                             steps {
                                 script {
-                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
                                         image_arm64.push("arm64")
                                         image_arm64.push("${env.GIT_COMMIT}-arm64")
                                         image_arm64.push("${env.BUILD_NUMBER}-arm64")

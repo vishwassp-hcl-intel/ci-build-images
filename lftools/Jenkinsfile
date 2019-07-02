@@ -49,7 +49,7 @@ pipeline {
             when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
             steps {
                 script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10004") {
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
                         image_amd64.push("latest")
                         image_amd64.push(env.GIT_COMMIT)
                         image_amd64.push("0.23.1-centos7")
