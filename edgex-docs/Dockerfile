@@ -13,10 +13,12 @@ LABEL license='SPDX-License-Identifier: Apache-2.0' \
   maintainer='EdgeX Foundry <edgex-devel@lists.edgexfoundry.org>'
 
 RUN apt-get update && apt-get dist-upgrade -y && \
-  apt-get install -y git python-pip latexmk texlive-latex-recommended \
-  texlive-latex-extra texlive-fonts-recommended nodejs npm \
+  apt-get install -y git python-pip nodejs npm \
   make linkchecker wget curl
-RUN apt-get install -y --no-install-recommends texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+RUN apt-get install -y --no-install-recommends \
+  latexmk texlive-latex-recommended \
+  texlive-latex-extra texlive-fonts-recommended \
+  && rm -rf /usr/share/doc/*
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 RUN pip install sphinx==1.7.9 sphinxcontrib-googleanalytics==0.1
 RUN npm i -g raml2html@3.0.1
