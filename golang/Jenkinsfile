@@ -25,6 +25,10 @@ pipeline {
         label 'centos7-docker-4c-2g'
     }
 
+    options {
+        timestamps()
+    }
+
     stages {
         stage('LF Prep') {
             steps {
@@ -98,6 +102,15 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+
+        // If previous stages complete, scan pushed images
+        stage('Clair Image Scan') {
+            when { expression { edgex.isReleaseStream() } }
+            steps {
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-golang-base:1.11.9-alpine")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-golang-base:1.11.9-alpine-arm64")
             }
         }
     }
