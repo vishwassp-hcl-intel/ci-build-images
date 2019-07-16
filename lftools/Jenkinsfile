@@ -77,10 +77,10 @@ def loadGlobalLibrary(branch = '*/master') {
             userRemoteConfigs: [[url: 'https://github.com/edgexfoundry/edgex-global-pipelines.git']],
             branches: [[name: branch]],
             doGenerateSubmoduleConfigurations: false,
-            extensions: [[
-                $class: 'SubmoduleOption',
-                recursiveSubmodules: true,
-            ]]]
-        )
+            extensions: [
+                [$class: 'SubmoduleOption', recursiveSubmodules: true],
+                [$class: 'IgnoreNotifyCommit']
+            ]
+        ])
     ) _
 }
