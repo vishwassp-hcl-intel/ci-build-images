@@ -1,8 +1,9 @@
 FROM centos:7
 
-COPY ./lftools/fedora-infra-sigul.repo /etc/yum.repos.d/
+COPY ./fedora-infra-sigul.repo /etc/yum.repos.d/
 
-RUN yum install -y git python python-devel make automake gcc kernel-devel sudo sigul
+RUN yum install -y epel-release
+RUN yum install -y git python python-devel make automake gcc kernel-devel sudo sigul xmlstarlet
 
 RUN curl "https://bootstrap.pypa.io/get-pip.py" -o get-pip.py \
     && python get-pip.py \
