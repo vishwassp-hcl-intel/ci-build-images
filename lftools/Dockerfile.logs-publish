@@ -1,0 +1,22 @@
+#
+# Copyright (c) 2019
+# Intel
+#
+# This version of Docker image is being created to ONLY support lftools log
+# and archival publishing. Sigul signing is not supported with this image.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+FROM python:3-alpine
+
+LABEL license='SPDX-License-Identifier: Apache-2.0' \
+  copyright='Copyright (c) 2019: Intel' \
+  maintainer="Ernesto Ojeda <ernesto.ojeda@intel.com>"
+
+RUN apk add --update --no-cache \
+  build-base openssl-dev libffi-dev linux-headers xmlstarlet
+
+RUN pip3 install --no-cache-dir --upgrade pip setuptools \
+  && pip3 install --no-cache-dir -I lftools[openstack]==0.23.1 \
+  && apk del build-base linux-headers
