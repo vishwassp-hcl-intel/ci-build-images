@@ -16,7 +16,8 @@
 
 loadGlobalLibrary()
 
-def image_amd64
+def image
+def logImage
 def changeDetected
 
 pipeline {
@@ -44,7 +45,8 @@ pipeline {
             when { expression { changeDetected } }
             steps {
                 script {
-                    image_amd64 = docker.build('edgex-lftools', '-f lftools/Dockerfile ./lftools')
+                    image = docker.build('edgex-lftools', '-f lftools/Dockerfile ./lftools')
+                    logImage = docker.build('edgex-lftools-log-publisher', '-f lftools/Dockerfile.logs-publish ./lftools')
                 }
             }
         }
@@ -54,9 +56,14 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                        image_amd64.push("latest")
-                        image_amd64.push(env.GIT_COMMIT)
-                        image_amd64.push("0.23.1-centos7")
+                        image.push("latest")
+                        image.push(env.GIT_COMMIT)
+                        image.push("0.23.1-centos7")
+                    }
+
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                        image.push("alpine")
+                        image.push("0.23.1-alpine")
                     }
                 }
             }
