@@ -23,5 +23,7 @@ RUN ln -s /usr/bin/nodejs /usr/bin/node
 RUN pip install sphinx==1.7.9 sphinxcontrib-googleanalytics==0.1
 RUN npm i -g raml2html@3.0.1
 
+COPY ./scripts/raml-verify.sh /scripts/
+
 RUN mkdir docbuild
 WORKDIR /docbuild
