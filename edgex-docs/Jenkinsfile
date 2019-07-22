@@ -16,7 +16,8 @@
 
 loadGlobalLibrary()
 
-def image
+def image_amd64
+def image_arm64
 def changeDetected
 
 pipeline {
@@ -41,25 +42,65 @@ pipeline {
 
         stage('Build Docker Image') {
             when { expression { changeDetected } }
-            stages {
-                stage('Docker Build') {
-                    steps {
-                        edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+            parallel {
+                stage('amd64') {
+                    agent {
+                        label 'centos7-docker-4c-2g'
+                    }
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
 
-                        script {
-                            image = docker.build('edgex-docs-builder', '-f edgex-docs/Dockerfile ./edgex-docs')
+                                script {
+                                    image_amd64 = docker.build('edgex-docs-builder', '-f edgex-docs/Dockerfile ./edgex-docs')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        image_amd64.push('latest')
+                                        image_amd64.push('amd64')
+                                        image_amd64.push('x86_64')
+                                        image_amd64.push(env.GIT_COMMIT)
+                                        image_amd64.push(env.BUILD_NUMBER)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+                stage('arm64') {
+                    agent {
+                        label 'ubuntu18.04-docker-arm64-4c-2g'
+                    }
 
-                stage('Docker Push') {
-                    when { expression { edgex.isReleaseStream() } }
-                    steps {
-                        script {
-                            docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                                image.push("latest")
-                                image.push(env.GIT_COMMIT)
-                                image.push(env.BUILD_NUMBER)
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
+                                script {
+                                    image_arm64 = docker.build('edgex-docs-builder', '-f edgex-docs/Dockerfile ./edgex-docs')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        image_arm64.push('arm64')
+                                        image_arm64.push('aarch64')
+                                        image_arm64.push("${env.BUILD_NUMBER}-arm64")
+                                        image_arm64.push("${env.BUILD_NUMBER}-aarch64")
+                                    }
+                                }
                             }
                         }
                     }
