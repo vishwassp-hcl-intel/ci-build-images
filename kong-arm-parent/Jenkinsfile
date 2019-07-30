@@ -24,6 +24,10 @@ pipeline {
         label 'centos7-docker-4c-2g'
     }
 
+    options {
+        timestamps()
+    }
+
     stages {
         stage('LF Prep') {
             steps {
@@ -57,6 +61,13 @@ pipeline {
                         image.push(env.BUILD_NUMBER)
                     }
                 }
+            }
+        }
+
+        stage('Clair Image Scan') {
+            when { expression { edgex.isReleaseStream() } }
+            steps {
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/kong-arm-parent:latest")
             }
         }
     }
