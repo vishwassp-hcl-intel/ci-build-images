@@ -11,3 +11,5 @@ This repository contains Docker images used within the EdgeX Jenkins pipeline pr
 - [lftools](lftools/Dockerfile)
 - [klar](klar/Dockerfile)
 - [edgex-docs](edgex-docs/Dockerfile)
+- [jq](jq/Dockerfile)
+- [sonarqube](sonarqube/Dockerfile)
