@@ -17,7 +17,8 @@
 loadGlobalLibrary()
 
 def image
-def logImage
+def logImage_amd64
+def logImage_arm64
 def changeDetected
 
 pipeline {
@@ -33,7 +34,6 @@ pipeline {
         stage('LF Prep') {
             steps {
                 edgeXSetupEnvironment()
-                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
                 script {
                     changeDetected = edgex.didChange('lftools')
                     println "Detected Change in LF Tools? ${changeDetected}"
@@ -43,37 +43,83 @@ pipeline {
 
         stage('Build Docker Image') {
             when { expression { changeDetected } }
-            steps {
-                script {
-                    image = docker.build('edgex-lftools', '-f lftools/Dockerfile ./lftools')
-                    logImage = docker.build('edgex-lftools-log-publisher', '-f lftools/Dockerfile.logs-publish ./lftools')
+            parallel {
+                stage('amd64') {
+                    agent {
+                        label 'centos7-docker-4c-2g'
+                    }
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
+                                script {
+                                    image = docker.build('edgex-lftools', '-f lftools/Dockerfile ./lftools')
+                                    logImage_amd64 = docker.build('edgex-lftools-log-publisher', '-f lftools/Dockerfile.logs-publish ./lftools')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        image.push("latest")
+                                        image.push(env.GIT_COMMIT)
+                                        image.push("0.23.1-centos7")
+                                    }
+
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        logImage_amd64.push("alpine")
+                                        logImage_amd64.push("0.23.1-alpine")
+                                        logImage_amd64.push("amd64")
+                                        logImage_amd64.push("x86_64")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('arm64') {
+                    agent {
+                        label 'ubuntu18.04-docker-arm64-4c-2g'
+                    }
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
+                                script {
+                                    logImage_arm64 = docker.build('edgex-lftools-log-publisher', '-f lftools/Dockerfile.logs-publish ./lftools')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        logImage_arm64.push("arm64")
+                                        logImage_arm64.push("aarch64")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        stage('Push Docker Image') {
-            when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
-            steps {
-                script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                        image.push("latest")
-                        image.push(env.GIT_COMMIT)
-                        image.push("0.23.1-centos7")
-                    }
-
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                        logImage.push("alpine")
-                        logImage.push("0.23.1-alpine")
-                    }
-                }
-            }
         }
 
         stage('Clair Image Scan') {
             when { expression { edgex.isReleaseStream() } }
             steps {
                 edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools:0.23.1-centos7")
-                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools-log-publisher:0.23.1-alpine")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools-log-publisher:amd64")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools-log-publisher:arm64")
             }
         }
     }
