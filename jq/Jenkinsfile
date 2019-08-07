@@ -30,7 +30,7 @@ pipeline {
                 edgeXSetupEnvironment()
                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
                 script {
-                    changeDetected = edgex.didChange('jq')
+                    changeDetected = edgex.didChange('^jq/')
                     println "Detected Change in jq? ${changeDetected}"
                 }
             }
