@@ -17,6 +17,7 @@
 loadGlobalLibrary()
 
 def image_amd64
+def image_arm64
 def changeDetected
 
 pipeline {
@@ -24,11 +25,14 @@ pipeline {
         label 'centos7-docker-4c-2g'
     }
 
+    options {
+        timestamps()
+    }
+
     stages {
         stage('LF Prep') {
             steps {
                 edgeXSetupEnvironment()
-                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
                 script {
                     changeDetected = edgex.didChange('^jq/')
                     println "Detected Change in jq? ${changeDetected}"
@@ -38,23 +42,74 @@ pipeline {
 
         stage('Build Docker Image') {
             when { expression { changeDetected } }
-            steps {
-                script {
-                    image_amd64 = docker.build('edgex-jq', '-f jq/Dockerfile ./jq')
+            parallel {
+                stage('amd64') {
+                    agent {
+                        label 'centos7-docker-4c-2g'
+                    }
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
+                                script {
+                                    image_amd64 = docker.build('edgex-jq', '-f jq/Dockerfile ./jq')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        image_amd64.push("amd64")
+                                        image_amd64.push(env.GIT_COMMIT)
+                                        image_amd64.push("5.1")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('arm64') {
+                    agent {
+                        label 'ubuntu18.04-docker-arm64-4c-2g'
+                    }
+                    stages {
+                        stage('Docker Build') {
+                            steps {
+                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
+
+                                script {
+                                    image_arm64 = docker.build('edgex-jq', '-f jq/Dockerfile ./jq')
+                                }
+                            }
+                        }
+
+                        stage('Docker Push') {
+                            when { expression { edgex.isReleaseStream() } }
+                            steps {
+                                script {
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        image_arm64.push("arm64")
+                                        image_arm64.push("${env.GIT_COMMIT}-arm64")
+                                        image_arm64.push("5.1-arm64")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        stage('Push Docker Image') {
-            when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
+        stage('Clair Image Scan') {
+            when { expression { edgex.isReleaseStream() } }
             steps {
-                script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                        image_amd64.push("latest")
-                        image_amd64.push(env.GIT_COMMIT)
-                        image_amd64.push("5.1")
-                    }
-                }
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-jq:amd64")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-jq:arm64")
             }
         }
     }
