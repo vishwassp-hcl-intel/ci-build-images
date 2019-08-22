@@ -69,7 +69,7 @@ pipeline {
         stage('Clair Image Scan') {
             when { allOf { expression { edgex.isReleaseStream() }; expression { changeDetected } } }
             steps {
-                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-snyk-go:")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-snyk-go:${env.SNYK_VERSION}")
             }
         }
     }
