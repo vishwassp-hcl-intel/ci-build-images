@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-FROM hypriot/rpi-alpine
+FROM ernestoojeda/rpi-alpine:arm64
 
 LABEL license='SPDX-License-Identifier: Apache-2.0' \
   copyright='Copyright (c) 2019: Intel'
