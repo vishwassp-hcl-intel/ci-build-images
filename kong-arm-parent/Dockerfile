@@ -20,7 +20,7 @@ ENV LUAROCKS_VERSION=2.4.3
 RUN apk add --update alpine-sdk
 
 RUN apk add --no-cache --virtual .build-deps wget tar ca-certificates \
-  && apk add --no-cache libgcc openssl pcre perl tzdata curl libcap su-exec unzip zlib-dev 
+  && apk add --no-cache git libgcc openssl pcre perl tzdata curl libcap su-exec unzip zlib-dev 
 
 
 RUN wget https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz \
@@ -41,16 +41,38 @@ RUN	wget -O kong.tar.gz "https://bintray.com/kong/kong-community-edition-alpine-
   && wget https://github.com/Kong/openresty-patches/archive/master.tar.gz 
 
 
-RUN	tar -xzf /openresty.tar.gz \
-  && tar zxvf master.tar.gz \
+RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
+  && tar -xzvf openresty-${OPENRESTY_VERSION}.tar.gz \
+  && wget https://github.com/Kong/openresty-patches/archive/master.tar.gz \
+  && tar -zxvf master.tar.gz \
+  && git clone https://github.com/Kong/lua-kong-nginx-module.git \
   && cd openresty-${OPENRESTY_VERSION} \
   && cd bundle \
   && for i in ../../openresty-patches-master/patches/${OPENRESTY_VERSION}/*.patch; do patch -p1 < $i; done \
   && cd .. \
-  && ./configure --with-pcre=../pcre-${PCRE_VERSION} --with-openssl=../openssl-${OPENSSL_VERSION} -j2 --with-pcre-jit  --with-http_ssl_module --with-http_realip_module   --with-http_stub_status_module  --with-http_v2_module \
-  && make -j4 \
-  && sudo make install \
-  && export PATH="$PATH:/usr/local/openresty/bin"
+  && ./configure \
+  --with-cc-opt="-I/usr/local/include/" \
+  --with-ld-opt="-L/usr/local/lib -Wl,-u,pcre_version" \
+  --add-module=../lua-kong-nginx-module \
+  --with-pcre=../pcre-${PCRE_VERSION} \
+  --with-openssl=../openssl-${OPENSSL_VERSION} \
+  --with-pcre-jit \
+  --with-http_ssl_module \
+  --with-http_realip_module \
+  --with-http_stub_status_module \
+  --with-http_v2_module && make && make install \
+  && cd .. \
+  && cd /lua-kong-nginx-module \
+  && install -d /usr/local/share/lua/5.1/resty/kong/ \
+  && install -m 664 lualib/resty/kong/*.lua /usr/local/share/lua/5.1/resty/kong/ \
+  && cd .. \
+  && rm -rf openresty-${OPENRESTY_VERSION}.tar.gz \
+  && rm -rf openresty-${OPENRESTY_VERSION} \
+  && rm -rf openresty-patches-master \
+  && rm -rf master.tar.gz \
+  && rm -rf pcre-${PCRE_VERSION} \
+  && rm -rf openssl-${OPENSSL_VERSION} \
+  && rm -rf lua-kong-nginx-module
 
 
 RUN wget -O luarocks.tar.gz http://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
