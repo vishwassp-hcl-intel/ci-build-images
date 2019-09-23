@@ -22,7 +22,8 @@ RUN apk add --update alpine-sdk
 RUN apk add --no-cache --virtual .build-deps wget tar ca-certificates \
   && apk add --no-cache libgcc openssl pcre perl tzdata curl libcap su-exec unzip zlib-dev 
 
-RUN wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${PCRE_VERSION}.tar.gz \
+
+RUN wget https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz \
   && tar -xvf pcre-${PCRE_VERSION}.tar.gz
 
 RUN wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
