@@ -11,16 +11,17 @@ LABEL license='SPDX-License-Identifier: Apache-2.0' \
 
 LABEL maintainer="Ernesto Ojeda <ernesto.ojeda@intel.com>, Sven Walther <sven@walther.world>"
 
-ENV OPENSSL_VERSION 1.0.2h
-ENV OPENRESTY_VERSION 1.13.6.1
-ENV KONG_VERSION 1.0.3
-ENV PCRE_VERSION=8.40
-ENV LUAROCKS_VERSION=2.4.3
+ENV KONG_VERSION 1.3.0
+ENV OPENRESTY_VERSION 1.15.8.1
+ENV LUAROCKS_VERSION 3.1.3
+ENV PCRE_VERSION 8.43
+ENV OPENSSL_VERSION 1.1.1c
 
 RUN apk add --update alpine-sdk
 
 RUN apk add --no-cache --virtual .build-deps wget tar ca-certificates \
-  && apk add --no-cache git libgcc openssl pcre perl tzdata curl libcap su-exec unzip zlib-dev 
+  && apk add --no-cache git linux-headers libgcc openssl pcre perl tzdata curl \
+  libcap su-exec unzip zlib-dev bsd-compat-headers m4
 
 
 RUN wget https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz \
@@ -32,14 +33,11 @@ RUN wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
   && cd openssl-${OPENSSL_VERSION}/ \
   && patch -p1 < ../openssl-${OPENSSL_VERSION}-sess_set_get_cb_yield.patch \
   && ./config -fPIC \
-  && make -j4 \
-  && make install \
-  && cd ..
-
-RUN	wget -O kong.tar.gz "https://bintray.com/kong/kong-community-edition-alpine-tar/download_file?file_path=kong-community-edition-${KONG_VERSION}.apk.tar.gz" \
-  && wget -O openresty.tar.gz https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
-  && wget https://github.com/Kong/openresty-patches/archive/master.tar.gz 
-
+  && make -j 4 \
+  && make install_sw \
+  && cd .. \
+  && rm -rf openssl-${OPENSSL_VERSION}-sess_set_get_cb_yield.patch \
+  && rm -rf openssl-${OPENSSL_VERSION}.tar.gz
 
 RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
   && tar -xzvf openresty-${OPENRESTY_VERSION}.tar.gz \
@@ -60,7 +58,7 @@ RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
   --with-http_ssl_module \
   --with-http_realip_module \
   --with-http_stub_status_module \
-  --with-http_v2_module && make && make install \
+  --with-http_v2_module && make -j 4 && make install \
   && cd .. \
   && cd /lua-kong-nginx-module \
   && install -d /usr/local/share/lua/5.1/resty/kong/ \
@@ -74,23 +72,38 @@ RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
   && rm -rf openssl-${OPENSSL_VERSION} \
   && rm -rf lua-kong-nginx-module
 
-
-RUN wget -O luarocks.tar.gz http://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
-  && tar -xzf luarocks.tar.gz \
+RUN wget http://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
+  && tar -xzvf luarocks-${LUAROCKS_VERSION}.tar.gz \
   && cd luarocks-${LUAROCKS_VERSION} \
-  && ./configure --lua-suffix=jit --with-lua=/usr/local/openresty/luajit --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1  \
-  && make -j4 build \
+  && ./configure \
+  --lua-suffix=jit \
+  --with-lua=/usr/local/openresty/luajit \
+  --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
+  && make -j 4 build \
   && make install \
-  && cd ..
+  && cd .. \
+  && rm -rf luarocks-${LUAROCKS_VERSION}.tar.gz \
+  && rm -rf luarocks-${LUAROCKS_VERSION}
 
-RUN apk add --no-cache bsd-compat-headers m4
+RUN git clone https://github.com/kong/kong.git \
+  && cd kong \
+  && true \
+  && git checkout ${KONG_VERSION} \
+  && luarocks make \
+  CRYPTO_LIBDIR=/usr/local/lib \
+  CRYPTO_INCDIR=/usr/local/include \
+  OPENSSL_LIBDIR=/usr/local/lib \
+  OPENSSL_INCDIR=/usr/local/include \
+  && cp -f bin/kong /usr/local/bin/kong \
+  && mkdir /etc/kong \
+  && cp -f kong.conf.default /etc/kong/ \
+  && cp -f /etc/kong/kong.conf.default /etc/kong/kong.conf \
+  && cd .. \
+  && mkdir /usr/local/kong \
+  && cp /usr/local/openresty/nginx/conf/* /usr/local/kong/ \
+  && mkdir /usr/local/kong/logs \
+  && rm -rf kong
 
-RUN luarocks install kong ${KONG_VERSION}-0 OPENSSL_DIR=/usr/local/ssl CRYPTO_DIR=/usr/local/ssl
-
-RUN cd /tmp \
-  && tar xvf /kong.tar.gz \
-  && cp /tmp/usr/local/bin/kong /usr/local/openresty/bin \
-  && ln -s /usr/local/openresty/bin/kong /usr/local/bin/kong \
-  && cp -a /tmp/usr/local/kong /usr/local
+RUN apk add --no-cache 
 
 RUN kong roar
