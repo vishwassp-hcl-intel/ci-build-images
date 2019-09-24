@@ -21,7 +21,7 @@ RUN apk add --update alpine-sdk
 
 RUN apk add --no-cache --virtual .build-deps wget tar ca-certificates \
   && apk add --no-cache git linux-headers libgcc openssl pcre perl tzdata curl \
-  libcap su-exec unzip zlib-dev bsd-compat-headers m4
+  libcap su-exec unzip zlib-dev bsd-compat-headers m4 lua-md5
 
 
 RUN wget https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz \
