@@ -3,13 +3,12 @@
 # Intel
 #
 # SPDX-License-Identifier: Apache-2.0
+# Based off https://gist.githubusercontent.com/jeremyxu2010/a3fb26b00aaaab52c48139f980ad4a95/raw/da312c78a3f9a44ab11846cc6d4b7246a675d6bb/Dockerfile
 #
-FROM ernestoojeda/rpi-alpine:arm64
+FROM ernestoojeda/rpi-ubuntu:arm64
 
 LABEL license='SPDX-License-Identifier: Apache-2.0' \
   copyright='Copyright (c) 2019: Intel'
-
-LABEL maintainer="Ernesto Ojeda <ernesto.ojeda@intel.com>, Sven Walther <sven@walther.world>"
 
 ENV KONG_VERSION 1.3.0
 ENV OPENRESTY_VERSION 1.15.8.1
@@ -17,15 +16,19 @@ ENV LUAROCKS_VERSION 3.1.3
 ENV PCRE_VERSION 8.43
 ENV OPENSSL_VERSION 1.1.1c
 
-RUN apk add --update alpine-sdk
-
-RUN apk add --no-cache --virtual .build-deps wget tar ca-certificates \
-  && apk add --no-cache git linux-headers libgcc openssl pcre perl tzdata curl \
-  libcap su-exec unzip zlib-dev bsd-compat-headers m4 lua-md5
+RUN apt-get update && apt-get install -y libreadline-dev libncurses5-dev \
+  build-essential libpcre3-dev perl curl libssl-dev zlib1g-dev \
+  perl unzip libssl-dev libpcre3-dev m4 lua-yaml-dev wget git
 
 
 RUN wget https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz \
-  && tar -xvf pcre-${PCRE_VERSION}.tar.gz
+  && tar -xvf pcre-${PCRE_VERSION}.tar.gz \
+  && cd pcre-${PCRE_VERSION} \
+  && ./configure \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf pcre-${PCRE_VERSION}.tar.gz
 
 RUN wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
   && tar -zvxf openssl-${OPENSSL_VERSION}.tar.gz \
@@ -33,8 +36,8 @@ RUN wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
   && cd openssl-${OPENSSL_VERSION}/ \
   && patch -p1 < ../openssl-${OPENSSL_VERSION}-sess_set_get_cb_yield.patch \
   && ./config -fPIC \
-  && make -j 4 \
-  && make install_sw \
+  && make \
+  && make install \
   && cd .. \
   && rm -rf openssl-${OPENSSL_VERSION}-sess_set_get_cb_yield.patch \
   && rm -rf openssl-${OPENSSL_VERSION}.tar.gz
@@ -58,9 +61,9 @@ RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
   --with-http_ssl_module \
   --with-http_realip_module \
   --with-http_stub_status_module \
-  --with-http_v2_module && make -j 4 && make install \
+  --with-http_v2_module && make && make install \
   && cd .. \
-  && cd /lua-kong-nginx-module \
+  && cd lua-kong-nginx-module \
   && install -d /usr/local/share/lua/5.1/resty/kong/ \
   && install -m 664 lualib/resty/kong/*.lua /usr/local/share/lua/5.1/resty/kong/ \
   && cd .. \
@@ -79,7 +82,7 @@ RUN wget http://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VERSION
   --lua-suffix=jit \
   --with-lua=/usr/local/openresty/luajit \
   --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
-  && make -j 4 build \
+  && make build \
   && make install \
   && cd .. \
   && rm -rf luarocks-${LUAROCKS_VERSION}.tar.gz \
@@ -103,7 +106,3 @@ RUN git clone https://github.com/kong/kong.git \
   && cp /usr/local/openresty/nginx/conf/* /usr/local/kong/ \
   && mkdir /usr/local/kong/logs \
   && rm -rf kong
-
-RUN apk add --no-cache 
-
-RUN kong roar
