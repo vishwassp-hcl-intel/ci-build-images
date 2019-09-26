@@ -9,7 +9,7 @@ FROM ernestoojeda/rpi-ubuntu:arm64
 LABEL license='SPDX-License-Identifier: Apache-2.0' \
   copyright='Copyright (c) 2019: Intel'
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl libyaml-0-2
 
 # This layer contains all the components build from src like openssl, openresty, kong, etc
 # We are pre-caching these components because they take over 5 hours to build
