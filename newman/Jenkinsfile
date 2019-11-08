@@ -49,7 +49,7 @@ pipeline {
                                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
 
                                 script {
-                                    image_amd64 = docker.build('newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
+                                    image_amd64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
                                 }
                             }
                         }
@@ -79,7 +79,7 @@ pipeline {
                                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
 
                                 script {
-                                    image_arm64 = docker.build('newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
+                                    image_arm64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
                                 }
                             }
                         }
