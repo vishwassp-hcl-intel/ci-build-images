@@ -49,7 +49,7 @@ pipeline {
                                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
 
                                 script {
-                                    image_amd64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
+                                    image_amd64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.6 -f newman/Dockerfile ./newman')
                                 }
                             }
                         }
@@ -61,7 +61,7 @@ pipeline {
                                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
                                         image_amd64.push("amd64")
                                         image_amd64.push(env.GIT_COMMIT)
-                                        image_amd64.push("4.5.1")
+                                        image_amd64.push("4.5.6")
                                     }
                                 }
                             }
@@ -79,7 +79,7 @@ pipeline {
                                 edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
 
                                 script {
-                                    image_arm64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.1 -f newman/Dockerfile ./newman')
+                                    image_arm64 = docker.build('edgex-newman', '--build-arg NEWMAN_VERSION=4.5.6 -f newman/Dockerfile ./newman')
                                 }
                             }
                         }
@@ -91,7 +91,7 @@ pipeline {
                                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
                                         image_arm64.push("arm64")
                                         image_arm64.push("${env.GIT_COMMIT}-arm64")
-                                        image_arm64.push("4.5.1-arm64")
+                                        image_arm64.push("4.5.6-arm64")
                                     }
                                 }
                             }

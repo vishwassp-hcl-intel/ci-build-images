@@ -1,6 +1,6 @@
-FROM alpine:3.7
+FROM node:10-alpine
+LABEL maintainer="Postman Labs <help@getpostman.com>"
 
-ARG NODE_VERSION=8
 ARG NEWMAN_VERSION
 
 # Set environment variables
@@ -11,15 +11,8 @@ RUN if [ ! $(echo $NEWMAN_VERSION | grep -oE "^[0-9]+\.[0-9]+\.[0-9]+$") ]; then
         echo "\033[0;31mA valid semver Newman version is required in the NEWMAN_VERSION build-arg\033[0m"; \
         exit 1; \
     fi && \
-    apk add --update --no-cache libgcc libstdc++ jq curl && \
-    apk add --update nodejs && \
-    # Extract and install Node from the binary downloaded in the previous step
-    #tar -xzf /etc/alpine-node-${NODE_VERSION}.tar.gz -C /usr --no-same-owner && \
     # Install Newman globally
-    npm config set unsafe-perm true && \
-    npm install --global newman@${NEWMAN_VERSION} && \
-    apk del jq curl
-
+    npm install --global newman@${NEWMAN_VERSION};
 
 # Set workdir to /etc/newman
 # When running the image, mount the directory containing your collection to this location
@@ -34,7 +27,7 @@ WORKDIR /etc/newman
 # Set newman as the default container command
 # Now you can run the container via
 #
-# docker run -v /home/collections:/etc/newman -t postman/newman_alpine33 -c YourCollection.json.postman_collection \
+# docker run -v /home/collections:/etc/newman -t postman/newman_alpine -c YourCollection.json.postman_collection \
 #                                                                        -e YourEnvironment.postman_environment \
 #                                                                        -H newman_report.html
 ENTRYPOINT ["newman"]
