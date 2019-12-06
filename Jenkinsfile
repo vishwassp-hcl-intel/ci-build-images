@@ -16,9 +16,11 @@
 
 loadGlobalLibrary()
 
-def image_amd64
-def image_arm64
+def image
+def logImage_amd64
+def logImage_arm64
 def changeDetected
+def mavenSettings = env.SILO == 'sandbox' ? 'sandbox-settings' : 'ci-build-images-settings'
 
 pipeline {
     agent {
@@ -33,9 +35,9 @@ pipeline {
         stage('LF Prep') {
             steps {
                 edgeXSetupEnvironment()
-
                 script {
-                    changeDetected = edgex.didChange('edgex-docs')
+                    changeDetected = edgex.didChange('lftools')
+                    println "Detected Change in LF Tools? ${changeDetected}"
                 }
             }
         }
@@ -50,10 +52,10 @@ pipeline {
                     stages {
                         stage('Docker Build') {
                             steps {
-                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
-
                                 script {
-                                    image_amd64 = docker.build('edgex-docs-builder', '-f edgex-docs/Dockerfile ./edgex-docs')
+                                    edgeXDockerLogin(settingsFile: mavenSettings)
+                                    image = docker.build('edgex-lftools', '-f Dockerfile .')
+                                    logImage_amd64 = docker.build('edgex-lftools-log-publisher', '-f Dockerfile.logs-publish .')
                                 }
                             }
                         }
@@ -63,29 +65,33 @@ pipeline {
                             steps {
                                 script {
                                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                                        image_amd64.push('latest')
-                                        image_amd64.push('amd64')
-                                        image_amd64.push('x86_64')
-                                        image_amd64.push(env.GIT_COMMIT)
-                                        image_amd64.push(env.BUILD_NUMBER)
+                                        image.push("latest")
+                                        image.push(env.GIT_COMMIT)
+                                        image.push("0.23.1-centos7")
+                                    }
+
+                                    docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
+                                        logImage_amd64.push("alpine")
+                                        logImage_amd64.push("0.23.1-alpine")
+                                        logImage_amd64.push("amd64")
+                                        logImage_amd64.push("x86_64")
                                     }
                                 }
                             }
                         }
                     }
                 }
+
                 stage('arm64') {
                     agent {
                         label 'ubuntu18.04-docker-arm64-4c-2g'
                     }
-
                     stages {
                         stage('Docker Build') {
                             steps {
-                                edgeXDockerLogin(settingsFile: env.MVN_SETTINGS)
-
                                 script {
-                                    image_arm64 = docker.build('edgex-docs-builder', '-f edgex-docs/Dockerfile ./edgex-docs')
+                                    edgeXDockerLogin(settingsFile: mavenSettings)
+                                    logImage_arm64 = docker.build('edgex-lftools-log-publisher', '-f Dockerfile.logs-publish .')
                                 }
                             }
                         }
@@ -95,10 +101,8 @@ pipeline {
                             steps {
                                 script {
                                     docker.withRegistry("https://${env.DOCKER_REGISTRY}:10003") {
-                                        image_arm64.push('arm64')
-                                        image_arm64.push('aarch64')
-                                        image_arm64.push("${env.BUILD_NUMBER}-arm64")
-                                        image_arm64.push("${env.BUILD_NUMBER}-aarch64")
+                                        logImage_arm64.push("arm64")
+                                        logImage_arm64.push("aarch64")
                                     }
                                 }
                             }
@@ -106,13 +110,15 @@ pipeline {
                     }
                 }
             }
+
         }
 
         stage('Clair Image Scan') {
             when { expression { edgex.isReleaseStream() } }
             steps {
-                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-docs-builder:amd64")
-                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-docs-builder:arm64")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools:0.23.1-centos7")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools-log-publisher:amd64")
+                edgeXClair("${env.DOCKER_REGISTRY}:10003/edgex-lftools-log-publisher:arm64")
             }
         }
     }
@@ -125,16 +131,16 @@ pipeline {
 }
 
 def loadGlobalLibrary(branch = '*/master') {
-    library(identifier: 'edgex-global-pipelines@master', 
+    library(identifier: 'edgex-global-pipelines@master',
         retriever: legacySCM([
             $class: 'GitSCM',
             userRemoteConfigs: [[url: 'https://github.com/edgexfoundry/edgex-global-pipelines.git']],
             branches: [[name: branch]],
             doGenerateSubmoduleConfigurations: false,
-            extensions: [[
-                $class: 'SubmoduleOption',
-                recursiveSubmodules: true,
-            ]]]
-        )
-    ) _
+            extensions: [
+                [$class: 'SubmoduleOption', recursiveSubmodules: true],
+                [$class: 'IgnoreNotifyCommit']
+            ]
+        ])
+    )
 }
