@@ -1,14 +1,12 @@
-# ci-build-image
+# Docker image for Robotframework
+This Docker image used to run docker-compose tool.
+Official image https://hub.docker.com/r/docker/compose/
 
-This repository contains Docker images used within the EdgeX Jenkins pipeline projects.
+## Usage
 
-## Supported images
-
-- [Go 1.11.x](golang/Dockerfile)
-- [Go 1.12.x](golang-1.12/Dockerfile)
-- [C/C++](gcc/Dockerfile)
-- [lftools](lftools/Dockerfile)
-- [klar](klar/Dockerfile)
-- [edgex-docs](edgex-docs/Dockerfile)
-- [jq](jq/Dockerfile)
-- [sonarqube](sonarqube/Dockerfile)
+```
+clone https://github.com/docker/compose
+cd compose
+docker build . 
+```
+  
