@@ -19,6 +19,6 @@ edgeXBuildDocker (
     mavenSettings: 'ci-build-images-settings',
     dockerImageName: 'edgex-newman',
     dockerNamespace: 'edgex-devops',
-    dockerBuildArgs: ['NEWMAN_VERSION=4.5.1'],
-    dockerTags: ["4.5.1"]
+    dockerBuildArgs: ['NEWMAN_VERSION=4.5.6'],
+    dockerTags: ["4.5.6"]
 )
