@@ -19,5 +19,5 @@ edgeXBuildDocker (
     mavenSettings: 'ci-build-images-settings',
     dockerImageName: 'edgex-golang-base',
     dockerNamespace: 'edgex-devops',
-    dockerTags: ["1.12.6-alpine"]
+    dockerTags: ["1.12.14-alpine"]
 )
